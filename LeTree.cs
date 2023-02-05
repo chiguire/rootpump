@@ -24,6 +24,20 @@ public class TBranch  { // Can be used for shoot or root
 
     public static readonly float NO_PULSE = -10.0f;
 
+    public void Update() {
+        // Updates the world-space position of the branches
+        foreach (var c in Children)
+        {
+            c.UpdateBranchFromParent(this);
+        }
+    }
+
+    private void UpdateBranchFromParent(TBranch parent)
+    {
+        Position = parent.Position + Mathf.Polar2Cartesian(StartingPosition * parent.Length, parent.Direction);
+        Update();
+    }
+
     public void PopulateTestTree(int level) {
         if (level == 0) {
             return;
@@ -93,6 +107,11 @@ public class LeTree
             Pulse = TBranch.NO_PULSE,
             Children = new List<TBranch>(),
         };
+    }
+    public void Update()
+    {
+        ShootBranch.Update();
+        RootBranch.Update();
     }
 
     private TBranch CreateShoot(Vector2 position)

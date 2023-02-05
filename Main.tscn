@@ -1,8 +1,14 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://Main.cs" type="Script" id=1]
 [ext_resource path="res://TreeLogic.cs" type="Script" id=2]
 [ext_resource path="res://SceneDraw.cs" type="Script" id=3]
+[ext_resource path="res://music/rootpump-basic-1.mp3" type="AudioStream" id=4]
+[ext_resource path="res://BeatsDraw.cs" type="Script" id=5]
+[ext_resource path="res://music/rootpump-basic-2.mp3" type="AudioStream" id=6]
+[ext_resource path="res://music/rootpump-basic-3.mp3" type="AudioStream" id=7]
+[ext_resource path="res://img/logo.png" type="Texture" id=8]
+[ext_resource path="res://fonts/new_dynamicfont.tres" type="DynamicFont" id=9]
 
 [node name="Main" type="Node2D"]
 script = ExtResource( 1 )
@@ -24,3 +30,55 @@ margin_left = 13.0
 margin_top = 11.0
 margin_right = 277.0
 margin_bottom = 48.0
+
+[node name="BeatsDraw" type="Node2D" parent="UI"]
+script = ExtResource( 5 )
+
+[node name="Song" type="Node2D" parent="."]
+
+[node name="Channel1" type="AudioStreamPlayer" parent="Song"]
+stream = ExtResource( 4 )
+
+[node name="Channel2" type="AudioStreamPlayer" parent="Song"]
+stream = ExtResource( 6 )
+
+[node name="Channel3" type="AudioStreamPlayer" parent="Song"]
+stream = ExtResource( 7 )
+
+[node name="Title" type="CanvasLayer" parent="."]
+offset = Vector2( 300, 512 )
+transform = Transform2D( 1, 0, 0, 1, 300, 512 )
+
+[node name="Sprite" type="Sprite" parent="Title"]
+position = Vector2( -2, -181 )
+texture = ExtResource( 8 )
+
+[node name="Instructions" type="Label" parent="Title"]
+margin_left = -252.0
+margin_top = -69.0
+margin_right = 268.0
+margin_bottom = 211.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
+custom_fonts/font = ExtResource( 9 )
+text = "Grow a plant while following the beat with Space. Play with the beat for different results.
+
+Press Space to begin."
+align = 1
+valign = 1
+autowrap = true
+
+[node name="Label" type="Label" parent="Title"]
+margin_left = -257.0
+margin_top = 263.0
+margin_right = 276.0
+margin_bottom = 471.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
+custom_fonts/font = ExtResource( 9 )
+text = "Made in Caracas Game Jam 2023 by Ciro Durán.
+February 2023.
+Brighton and Hove, UK."
+align = 1
+valign = 2
+autowrap = true

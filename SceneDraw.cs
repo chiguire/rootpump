@@ -43,8 +43,6 @@ public class SceneDraw : Node2D
 
     public static readonly float STARTING_ZOOM = 1.0f;
 
-    private bool firstDraw = true;
-
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -64,8 +62,6 @@ public class SceneDraw : Node2D
         DrawTree(TreeLogic.LeTree);
 
         DrawRect(GrassRect, GrassColor);
-
-        firstDraw = false;
     }
 
     private void DrawTree(LeTree leTree)
@@ -193,30 +189,10 @@ public class SceneDraw : Node2D
         }
 
         DrawPolygon(points, colors.ToArray());
-        //DrawPolyline(points, RootColor);
         if (root.Pulse >= 0.0f && root.Pulse <= 1.0f)
         {
             DrawCircle(WORLD_CENTER + root.Position + Mathf.Polar2Cartesian(root.Length * root.Pulse, root.Direction), root.Thickness*2.0f, RootColor);
         }
-        
-        /*
-        for (var i = 0; i != ROOT_SEGMENTS; i++)
-        {
-            float segmentStart = (float)i / ROOT_SEGMENTS;
-            float segmentEnd = (float)(i+1) / ROOT_SEGMENTS;
-            var segmentWidth = root.Thickness - (root.Thickness * 0.5f * segmentStart);
-            var from = WORLD_CENTER + root.Position + Mathf.Polar2Cartesian(root.Length * segmentStart, root.Direction);
-            var to = WORLD_CENTER + root.Position + Mathf.Polar2Cartesian(root.Length * segmentEnd, root.Direction);
-            DrawLine(from, to, RootColor, width: segmentWidth, antialiased: true);
-
-            if (firstDraw)
-            {
-                GD.Print($"Hi {from} to {to}");
-            }
-        }
-        */
-        
-        
     }
 
 

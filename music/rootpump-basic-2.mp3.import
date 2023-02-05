@@ -1,0 +1,15 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+path="res://.import/rootpump-basic-2.mp3-62b5e98ddaeb60f56cf7cad29098407e.mp3str"
+
+[deps]
+
+source_file="res://music/rootpump-basic-2.mp3"
+dest_files=[ "res://.import/rootpump-basic-2.mp3-62b5e98ddaeb60f56cf7cad29098407e.mp3str" ]
+
+[params]
+
+loop=true
+loop_offset=0
