@@ -9,6 +9,19 @@ public class TreeLogic : Node
 
     public AudioStats AudioStats { get; set; }
 
+    public Vector2 WorldCameraPos {
+        get {
+            if (LeTree.CurrentBranch == null)
+            {
+                return Vector2.Zero;
+            }
+            else
+            {
+                return LeTree.CurrentBranch.WorldCameraPos;
+            }
+        }
+    }
+
     [Signal]
     public delegate void StateChange(TreeLogicState OldState, TreeLogicState NewState);
 
@@ -24,13 +37,13 @@ public class TreeLogic : Node
     public void Reset()
     {
         LeTree = new LeTree(Vector2.Zero);
-        LeTree.RootBranch.PopulateTestTree(6);
+        LeTree.RootBranch.PopulateTestTree(3);
         State = TreeLogicState.TITLE;
     }
 
     public void Action()
     {
-        if (LeTree.CurrentBranch is null)
+        if (LeTree.CurrentBranch == null)
         {
             // do nothing
         }
@@ -63,6 +76,11 @@ public class TreeLogic : Node
         LeTree.ShootBranch.Thickness += delta;
     }
 
+    public void GrowRoot(float delta)
+    {
+        LeTree.RootBranch.GrowLengthThickness(delta);
+    }
+
     public void UpdatePulse(float delta)
     {
         if (LeTree.CurrentBranch is null)
@@ -80,6 +98,10 @@ public class TreeLogic : Node
                 LeTree.CurrentBranch = LeTree.CurrentBranch.ChangeToThisBranch;
                 LeTree.CurrentBranch.Pulse = 0;
                 cb.ChangeToThisBranch = null;
+            }
+            else if (LeTree.CurrentBranch.Pulse == TBranch.NO_PULSE)
+            {
+                LeTree.CurrentBranch = null;
             }
         }
     }

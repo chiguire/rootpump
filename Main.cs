@@ -122,7 +122,9 @@ public class Main : Node2D
             case TreeLogicState.GAME:
             {
                 treeLogic.GrowShoot(delta);
+                treeLogic.GrowRoot(delta);
                 treeLogic.UpdatePulse(delta);
+                camera.Position = SceneDraw.WORLD_CENTER + treeLogic.WorldCameraPos;
                 break;
             }
         }

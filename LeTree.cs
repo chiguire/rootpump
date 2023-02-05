@@ -29,6 +29,18 @@ public class TBranch  { // Can be used for shoot or root
 
     public static readonly float NO_PULSE = -10.0f;
 
+    public Vector2 WorldCameraPos {
+        get {
+            if (Pulse < 0) {
+                return Position;
+            }
+            else
+            {
+                return Position + Mathf.Polar2Cartesian(Length*Pulse, Direction);
+            }
+        }
+    }
+
     public void Update() {
         // Updates the world-space position of the branches
         foreach (var c in Children)
@@ -45,8 +57,10 @@ public class TBranch  { // Can be used for shoot or root
 
     public void Action()
     {
-        if (!(PossibleChild is null))
+        GD.Print("Hi!");
+        if (PossibleChild == null)
         {
+            GD.Print("Hi!!");
             var startingPosition = Pulse;
             var direction = (float) GD.RandRange(Direction - ArcRangeStart, Direction + ArcRangeEnd);
             Children.Add(new TBranch() {
@@ -139,10 +153,19 @@ public class TBranch  { // Can be used for shoot or root
             {
                 continue;
             }
-            GD.Print(c.StartingPosition);
             return c;
         }
         return null;
+    }
+
+    public void GrowLengthThickness(float delta)
+    {
+        Length += delta*5.0f;
+        Thickness += delta;
+        foreach (var c in Children)
+        {
+            c.GrowLengthThickness(delta);
+        }
     }
 
     public void PopulateTestTree(int level) {
