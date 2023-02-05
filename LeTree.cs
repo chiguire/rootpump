@@ -11,6 +11,8 @@ public enum TBranchType
 }
 
 public class TBranch  { // Can be used for shoot or root
+
+
     public TBranchType BranchType { get; set; }
     public Vector2 Position { get; set; } // Only given for "root" parent (hehe), children are calculated
     public float StartingPosition { get; set; } // w.r.t. parent
@@ -21,6 +23,9 @@ public class TBranch  { // Can be used for shoot or root
     public float Thickness { get; set; }
     public float Pulse { get; set; } // Between 0 and 1.0, where the pulse is travelling, -10 for no pulse
     public List<TBranch> Children { get; set; }
+    public TBranch PossibleChild { get; set; }
+
+    public TBranch ChangeToThisBranch { get; set; }
 
     public static readonly float NO_PULSE = -10.0f;
 
@@ -38,16 +43,120 @@ public class TBranch  { // Can be used for shoot or root
         Update();
     }
 
+    public void Action()
+    {
+        if (!(PossibleChild is null))
+        {
+            var startingPosition = Pulse;
+            var direction = (float) GD.RandRange(Direction - ArcRangeStart, Direction + ArcRangeEnd);
+            Children.Add(new TBranch() {
+                BranchType = BranchType,
+                Position = Position + Mathf.Polar2Cartesian(startingPosition * Length, Direction),
+                StartingPosition = startingPosition,
+                Direction = direction,
+                ArcRangeStart = ArcRangeStart,
+                ArcRangeEnd = ArcRangeEnd,
+                Length = Length * 0.8f,
+                Thickness = Thickness * 0.8f,
+                Pulse = TBranch.NO_PULSE,
+                Children = new List<TBranch>(),
+            });
+            Pulse = NO_PULSE;
+            ChangeToThisBranch = null;
+        }
+        else
+        {
+            Pulse = NO_PULSE;
+            ChangeToThisBranch = PossibleChild;
+        }
+    }
+
+    public void UpdatePulse(float delta)
+    {
+        if (Pulse < 0.0f) {
+            // do nothing
+        }
+        Pulse += delta;
+
+        // if Pulse >= 1.0f, create a new child or go into the next root
+        if (Pulse >= 1.0f)
+        {
+            Pulse = NO_PULSE;
+
+            // If there is no more root at the end, create more root
+            var moreRoot = RootAtTheEnd();
+            if (moreRoot == null)
+            {
+                var startingPosition = 1.0f;
+                var direction = (float) GD.RandRange(Direction - ArcRangeStart, Direction + ArcRangeEnd);
+                Children.Add(new TBranch() {
+                    BranchType = BranchType,
+                    Position = Position + Mathf.Polar2Cartesian(startingPosition * Length, Direction),
+                    StartingPosition = startingPosition,
+                    Direction = direction,
+                    ArcRangeStart = ArcRangeStart,
+                    ArcRangeEnd = ArcRangeEnd,
+                    Length = Length * 0.8f,
+                    Thickness = Thickness * 0.8f,
+                    Pulse = TBranch.NO_PULSE,
+                    Children = new List<TBranch>(),
+                });
+            }
+            else
+            {
+                ChangeToThisBranch = moreRoot;
+            }
+        }
+        
+        // Check a nearby child for possible
+        var foundNearby = false;
+        foreach (var c in Children)
+        {
+            var dist = Pulse - c.StartingPosition;
+            if (dist < 0)
+            {
+                dist *= -1;
+            }
+            if (dist < 0.1f)
+            {
+                foundNearby = true;
+                PossibleChild = c;
+                break;
+            }
+        }
+        if (!foundNearby)
+        {
+            PossibleChild = null;
+        }
+    }
+
+    // Look for branch at the end (1.0f), return null if there isn't any
+    public TBranch RootAtTheEnd()
+    {
+        foreach (var c in Children)
+        {
+            if (c.StartingPosition < 1.0f)
+            {
+                continue;
+            }
+            GD.Print(c.StartingPosition);
+            return c;
+        }
+        return null;
+    }
+
     public void PopulateTestTree(int level) {
         if (level == 0) {
             return;
         }
+        
+        Length *= level/3.0f;
 
-        var numChildren = GD.Randi() % 4;
+        var numChildren = 1;
 
         for (var i = 0; i != numChildren; i++)
         {
-            var startingPosition = (float)GD.RandRange(0.25, 1.0);
+            var startingPosition = 1.0f;//(float)GD.RandRange(0.25, 1.0);
             var direction = (float) GD.RandRange(Direction - ArcRangeStart, Direction + ArcRangeEnd);
 
             var newChild = new TBranch {
@@ -93,6 +202,8 @@ public class LeTree
 {
     public TBranch ShootBranch { get; set; }
     public TBranch RootBranch { get; set; }
+    public TBranch CurrentBranch { get; set; }
+
     public LeTree(Vector2 position)
     {
         ShootBranch = CreateShoot(position);
@@ -102,11 +213,12 @@ public class LeTree
             Direction = Mathf.Pi * 0.5f,
             ArcRangeStart = Mathf.Pi/7.0f,
             ArcRangeEnd = Mathf.Pi/7.0f,
-            Length = 100.0f,
+            Length = 50.0f,
             Thickness = 5.0f,
             Pulse = TBranch.NO_PULSE,
             Children = new List<TBranch>(),
         };
+        CurrentBranch = null;
     }
     public void Update()
     {

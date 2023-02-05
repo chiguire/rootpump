@@ -5,8 +5,9 @@ public class BeatsDraw : Node2D
 {
 
     public AudioStats AudioStats { get; set; }
+    public bool LastClickPlayerGood { get; set; }
 
-    private float actionDuration = 0.3f;
+    private float actionDuration = 0.2f;
     private float currentAction = 0.0f;
 
 
@@ -29,25 +30,25 @@ public class BeatsDraw : Node2D
     private void DrawAudioBeats()
     {
         var beatRadius = 10.0f;
-        var xOffset = 100.0f - AudioStats.StreamTime * AudioStats.PixelsBetweenSeconds;
+        var xMargin = 100.0f;
+        var timer = AudioStats.StreamTime + Main.AUDIO_DELAY;
+        var xOffset = xMargin - timer * AudioStats.PixelsBetweenSeconds;
+        var yOffset = 100.0f;
         var currentBeat = AudioStats.CurrentBeat;
 
         if (currentAction > 0.0f)
         {
-            DrawCircle(new Vector2(100.0f, 100), 20.0f, new Color(0x00000088));
+            DrawCircle(new Vector2(xMargin, yOffset), 20.0f, new Color(0x00000088));
         }
 
-        DrawCircle(new Vector2(100.0f, 100), 15.0f, new Color(0x380F1C88));
+        // Good beat indicator
+        DrawArc(new Vector2(xMargin, yOffset), 15.0f, 0, Mathf.Tau, 20, new Color(0x180F1C88), 5); 
         
         for (int i = 0; i != (int)AudioStats.NumBeats + 1; i++)
         {
             var p = (float)AudioStats.PixelsBetweenBeats * i;
-            var pos = new Vector2(xOffset + p, 100);
+            var pos = new Vector2(xOffset + p, yOffset);
             var color = Colors.Bisque;
-            if (currentBeat >= (i-0.1f) && currentBeat <= (i+0.1f))
-            {
-                color = Colors.Red;
-            }
             DrawCircle(pos, beatRadius, color);
         }
     }
@@ -58,7 +59,12 @@ public class BeatsDraw : Node2D
         if (currentAction > 0.0f)
         {
             currentAction = Mathf.Max(0, currentAction - delta);
+            LastClickPlayerGood = BeatsDraw.BeatInArea(AudioStats.CurrentBeat, Mathf.Round(AudioStats.CurrentBeat));
         }
         Update();
+    }
+
+    public static bool BeatInArea(float beat, float target) {
+        return (beat >= (target-0.15f) && beat <= (target+0.15f));
     }
 }

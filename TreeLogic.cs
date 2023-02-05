@@ -15,35 +15,78 @@ public class TreeLogic : Node
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        LeTree = new LeTree(Vector2.Zero);
+        Reset();
+        
         //LeTree.RootBranch.PopulateTestTree(3);
         //GD.Print(LeTree.RootBranch.ToString());
-        State = TreeLogicState.TITLE;
     }
 
     public void Reset()
     {
+        LeTree = new LeTree(Vector2.Zero);
+        LeTree.RootBranch.PopulateTestTree(6);
         State = TreeLogicState.TITLE;
     }
 
     public void Action()
     {
-
+        if (LeTree.CurrentBranch is null)
+        {
+            // do nothing
+        }
+        LeTree.CurrentBranch.Action();
+        if (!(LeTree.CurrentBranch.ChangeToThisBranch is null))
+        {
+            var cb = LeTree.CurrentBranch;
+            LeTree.CurrentBranch = LeTree.CurrentBranch.ChangeToThisBranch;
+            LeTree.CurrentBranch.Pulse = 0;
+            cb.ChangeToThisBranch = null;
+        }
+        else
+        {
+            // Wait for a new pulse on next update
+            LeTree.CurrentBranch = null;
+        }
     }
 
     public void SwitchState(TreeLogicState NewState)
     {
         var oldState = State;
         State = NewState;
+        GD.Print($"Switch State from {oldState} to {NewState}");
         EmitSignal(nameof(StateChange), oldState, NewState);
+    }
+    
+    public void GrowShoot(float delta)
+    {
+        LeTree.ShootBranch.Length += delta;
+        LeTree.ShootBranch.Thickness += delta;
+    }
+
+    public void UpdatePulse(float delta)
+    {
+        if (LeTree.CurrentBranch is null)
+        {
+            // Create Pulse
+            LeTree.CurrentBranch = LeTree.RootBranch;
+            LeTree.CurrentBranch.Pulse = 0;
+        }
+        else
+        {
+            LeTree.CurrentBranch.UpdatePulse(delta);
+            if (!(LeTree.CurrentBranch.ChangeToThisBranch is null))
+            {
+                var cb = LeTree.CurrentBranch;
+                LeTree.CurrentBranch = LeTree.CurrentBranch.ChangeToThisBranch;
+                LeTree.CurrentBranch.Pulse = 0;
+                cb.ChangeToThisBranch = null;
+            }
+        }
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(float delta)
     {
-        LeTree.RootBranch.Length += delta;
-        LeTree.RootBranch.Thickness += delta;
-
         LeTree.RootBranch.Update();
         LeTree.ShootBranch.Update();
     }

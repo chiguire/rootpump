@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Main.cs" type="Script" id=1]
 [ext_resource path="res://TreeLogic.cs" type="Script" id=2]
@@ -9,6 +9,9 @@
 [ext_resource path="res://music/rootpump-basic-3.mp3" type="AudioStream" id=7]
 [ext_resource path="res://img/logo.png" type="Texture" id=8]
 [ext_resource path="res://fonts/new_dynamicfont.tres" type="DynamicFont" id=9]
+[ext_resource path="res://img/getready.png" type="Texture" id=10]
+[ext_resource path="res://GetReady.cs" type="Script" id=11]
+[ext_resource path="res://sound/getready.wav" type="AudioStream" id=12]
 
 [node name="Main" type="Node2D"]
 script = ExtResource( 1 )
@@ -30,9 +33,6 @@ margin_left = 13.0
 margin_top = 11.0
 margin_right = 277.0
 margin_bottom = 48.0
-
-[node name="BeatsDraw" type="Node2D" parent="UI"]
-script = ExtResource( 5 )
 
 [node name="Song" type="Node2D" parent="."]
 
@@ -82,3 +82,45 @@ Brighton and Hove, UK."
 align = 1
 valign = 2
 autowrap = true
+
+[node name="GetReady" type="CanvasLayer" parent="."]
+offset = Vector2( 300, 512 )
+transform = Transform2D( 1, 0, 0, 1, 300, 512 )
+
+[node name="Sprite" type="Sprite" parent="GetReady"]
+position = Vector2( -3, -170 )
+scale = Vector2( 0.948, 0.948 )
+texture = ExtResource( 10 )
+
+[node name="GetReady" type="Node2D" parent="GetReady"]
+script = ExtResource( 11 )
+
+[node name="Label" type="Label" parent="GetReady"]
+margin_left = -195.0
+margin_top = -85.0
+margin_right = 207.0
+margin_bottom = -35.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
+custom_fonts/font = ExtResource( 9 )
+text = "Press Space along with beat!"
+align = 1
+
+[node name="Game" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="BeatsDraw" type="Node2D" parent="Game"]
+script = ExtResource( 5 )
+
+[node name="BeatResultIndicator" type="Node2D" parent="Game"]
+
+[node name="Over" type="CanvasLayer" parent="."]
+offset = Vector2( 300, 512 )
+transform = Transform2D( 1, 0, 0, 1, 300, 512 )
+
+[node name="ReadyTimer" type="Timer" parent="."]
+
+[node name="OverTimer" type="Timer" parent="."]
+
+[node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 12 )

@@ -6,17 +6,25 @@ public class Main : Node2D
     // Declare member variables here. Examples:
     // private int a = 2;
     // private string b = "text";
+    public static readonly float AUDIO_DELAY = 0.18f;
 
     private TreeLogic treeLogic;
     private SceneDraw sceneDraw;
     private AudioStreamPlayer audioChannel1;
     private AudioStreamPlayer audioChannel2;
     private AudioStreamPlayer audioChannel3;
+    private AudioStreamPlayer clickPlayer;
     private BeatsDraw beatsDraw;
     private AudioStats audioStats;
     private CanvasLayer titleLayer;
+    private CanvasLayer readyLayer;
+    private CanvasLayer gameLayer;
+    private Node2D beatResultIndicator;
+    private CanvasLayer overLayer;
+    private GetReady getReadyIndicator;
 
-
+    private Timer readyTimer;
+    private Timer overTimer;
 
     private Camera2D camera;
 
@@ -54,12 +62,32 @@ public class Main : Node2D
 
         debugLabel = GetNode<Label>("UI/DebugLabel");
 
-        beatsDraw = GetNode<BeatsDraw>("UI/BeatsDraw");
+        beatsDraw = GetNode<BeatsDraw>("Game/BeatsDraw");
         beatsDraw.AudioStats = audioStats;
 
         titleLayer = GetNode<CanvasLayer>("Title");
+        readyLayer = GetNode<CanvasLayer>("GetReady");
+        readyLayer.Visible = false;
+        gameLayer = GetNode<CanvasLayer>("Game");
+        gameLayer.Visible = false;
+        beatResultIndicator = GetNode<Node2D>("Game/BeatResultIndicator");
+        getReadyIndicator = GetNode<GetReady>("GetReady/GetReady");
+        overLayer = GetNode<CanvasLayer>("Over");
+        overLayer.Visible = false;
 
         treeLogic.Connect(nameof(TreeLogic.StateChange), this, nameof(HandleSwitchState));
+
+        readyTimer = GetNode<Timer>("ReadyTimer");
+        readyTimer.OneShot = true;
+        readyTimer.WaitTime = 60.0f / BeatsPerMinute  * 16.0f;
+        readyTimer.Connect("timeout", this, "HandleReadyTimer");
+
+        overTimer = GetNode<Timer>("OverTimer");
+        overTimer.OneShot = true;
+        overTimer.WaitTime = 5.0f;
+        overTimer.Connect("timeout", this, "HandleOverTimer");
+
+        clickPlayer = GetNode<AudioStreamPlayer>("ClickPlayer");
     }
 
   // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -68,11 +96,36 @@ public class Main : Node2D
         var currentZoom = camera.Zoom;
         var desiredZoom = new Vector2(desiredZoomV, desiredZoomV);
         camera.Zoom = currentZoom.MoveToward(desiredZoom, delta);
-        debugLabel.Text = $"Current beat: {audioStats.CurrentBeat}, t: {audioStats.StreamTime}, st: {treeLogic.State}";
+        debugLabel.Text = $"Current beat: {audioStats.CurrentBeat}, t: {readyTimer.TimeLeft}, st: {treeLogic.State}";
 
-        var time = (OS.GetTicksUsec() - _timeBegin) / 1000000.0d;
-        time = Math.Max(0.0d, time - _timeDelay);
+        double playerTime = 0;
+        if (treeLogic.State == TreeLogicState.READY)
+        {
+            playerTime = clickPlayer.GetPlaybackPosition();
+        }
+        else
+        {
+            playerTime = audioChannel1.GetPlaybackPosition();
+        }
+        double time = playerTime + AudioServer.GetTimeSinceLastMix();
+        // Compensate for output latency.
+        time -= AudioServer.GetOutputLatency();
         audioStats.Set((float)time, _streamDuration, BeatsPerMinute);
+
+        switch (treeLogic.State)
+        {
+            case TreeLogicState.READY:
+            {
+                getReadyIndicator.BeatTimer = audioStats.CurrentBeat;
+                break;
+            }
+            case TreeLogicState.GAME:
+            {
+                treeLogic.GrowShoot(delta);
+                treeLogic.UpdatePulse(delta);
+                break;
+            }
+        }
     }
 
     public override void _Input(InputEvent @event)
@@ -82,36 +135,32 @@ public class Main : Node2D
             case TreeLogicState.TITLE:
                 if (Input.IsActionJustPressed("ui_accept"))
                 {
-                    treeLogic.SwitchState(TreeLogicState.GAME);
+                    treeLogic.SwitchState(TreeLogicState.READY);
+                }
+                break;
+            case TreeLogicState.READY:
+                if (Input.IsActionJustPressed("ui_accept"))
+                {
+                    getReadyIndicator.Action();
+                    var clickResult = getReadyIndicator.LastClickPlayerGood;
+                    GD.Print(clickResult? "Okay!": "Meh");
                 }
                 break;
             case TreeLogicState.GAME:
                 if (Input.IsActionJustPressed("ui_accept"))
                 {
-                    if (!audioChannel1.Playing)
-                    {
-                        _timeBegin = OS.GetTicksUsec();
-                        _timeDelay = AudioServer.GetTimeToNextMix() + AudioServer.GetOutputLatency() + 0.15f;
-                        _streamDuration = audioChannel1.Stream.GetLength();
-                        audioChannel1.Play();
-                        audioChannel2.Play();
-                        audioChannel3.Play();
-                    }
                     beatsDraw.Action();
+                    var clickResult = beatsDraw.LastClickPlayerGood;
+                    GD.Print(clickResult? "Okay!": "Meh");
+                    var resultLabel = new ResultLabel(clickResult? "Okay!": "Meh");
+                    beatResultIndicator.AddChild(resultLabel);
+                    resultLabel.RectPosition =  new Vector2(90, 80);
                 }
                 break;
+            case TreeLogicState.OVER:
+                // none
+                break;
         }
-        
-        /*
-        if (Input.IsActionPressed("zoom_out"))
-        {
-            desiredZoomV = Math.Min(desiredZoomV + 0.2f, 10.0f);
-        }
-        if (Input.IsActionPressed("zoom_in"))
-        {
-            desiredZoomV = Math.Max(desiredZoomV - 0.2f, 1.0f);
-        }
-        */
     }
 
     private void HandleSwitchState(TreeLogicState oldState, TreeLogicState newState)
@@ -121,6 +170,19 @@ public class Main : Node2D
             case TreeLogicState.TITLE:
                 titleLayer.Visible = false;
                 break;
+            case TreeLogicState.READY:
+                readyLayer.Visible = false;
+                clickPlayer.Stop();
+                break;
+            case TreeLogicState.GAME:
+                gameLayer.Visible = false;
+                audioChannel1.Stop();
+                audioChannel2.Stop();
+                audioChannel3.Stop();
+                break;
+            case TreeLogicState.OVER:
+                overLayer.Visible = false;
+                break;            
         }
 
         switch (newState)
@@ -128,6 +190,36 @@ public class Main : Node2D
             case TreeLogicState.TITLE:
                 titleLayer.Visible = true;
                 break;
+            case TreeLogicState.READY:
+                readyLayer.Visible = true;
+                _streamDuration = clickPlayer.Stream.GetLength();
+                audioChannel1.Stop();
+                audioChannel2.Stop();
+                audioChannel3.Stop();
+                clickPlayer.Play();
+                readyTimer.Start();
+                break;
+            case TreeLogicState.GAME:
+                gameLayer.Visible = true;
+                _streamDuration = audioChannel1.Stream.GetLength();
+                audioChannel1.Play();
+                audioChannel2.Play();
+                audioChannel3.Play();
+                break;
+            case TreeLogicState.OVER:
+                overLayer.Visible = true;
+                overTimer.Start();
+                break;
         }
+    }
+
+    private void HandleReadyTimer()
+    {
+        treeLogic.SwitchState(TreeLogicState.GAME);
+    }
+
+    private void HandleOverTimer()
+    {
+        treeLogic.SwitchState(TreeLogicState.TITLE);
     }
 }
