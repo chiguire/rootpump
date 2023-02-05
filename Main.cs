@@ -25,6 +25,7 @@ public class Main : Node2D
         camera = (Camera2D)GetNode("Camera");
         sceneDraw.Camera = camera;
         camera.Zoom = new Vector2(desiredZoomV, desiredZoomV);
+        
 
         debugLabel = (Label)GetNode("UI/DebugLabel");
     }
@@ -42,6 +43,7 @@ public class Main : Node2D
 
     public override void _Input(InputEvent @event)
     {
+        /*
         if (Input.IsActionPressed("zoom_out"))
         {
             desiredZoomV = Math.Min(desiredZoomV + 0.2f, 10.0f);
@@ -50,5 +52,6 @@ public class Main : Node2D
         {
             desiredZoomV = Math.Max(desiredZoomV - 0.2f, 1.0f);
         }
+        */
     }
 }

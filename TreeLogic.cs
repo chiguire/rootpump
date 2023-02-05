@@ -3,16 +3,16 @@ using System;
 
 public class TreeLogic : Node
 {
-    // Declare member variables here. Examples:
-    // private int a = 2;
-    // private string b = "text";
+    public TreeLogicState State { get; set; }
 
-    
+    public LeTree LeTree { get; set; }
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        
+        LeTree = new LeTree(Vector2.Zero);
+        LeTree.RootBranch.PopulateTestTree(3);
+        GD.Print(LeTree.RootBranch.ToString());
     }
 
     public void Reset()
